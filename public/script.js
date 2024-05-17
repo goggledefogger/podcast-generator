@@ -22,9 +22,9 @@ function renderPodcastsPage(podcasts) {
     const podcastItem = document.createElement('li');
     podcastItem.innerHTML = `
       ${podcast.name}
-      <button onclick="handlePodcastEdit(${podcast.id})">Edit</button>
-      <button onclick="handlePodcastDelete(${podcast.id})">Delete</button>
-      <button onclick="renderCreateEpisodePage(${podcast.id})">Create Episode</button>
+      <button onclick="handlePodcastEdit('${podcast.id}')">Edit</button>
+      <button onclick="handlePodcastDelete('${podcast.id}')">Delete</button>
+      <button onclick="renderCreateEpisodePage('${podcast.id}')">Create Episode</button>
       <ul id="episodes-list-${podcast.id}"></ul>
     `;
     podcastsList.appendChild(podcastItem);
@@ -64,9 +64,7 @@ function renderEpisodesForPodcast(episodes, podcastId) {
     const episodeItem = document.createElement('li');
     episodeItem.innerHTML = `
       ${episode.topic}
-      <button onclick="handleEpisodeEdit(${episode.id})">Edit</button>
-      <button onclick="handleEpisodeDelete(${episode.id})">Delete</button>
-      <button onclick="handleEpisodeRegenerate(${episode.id})">Regenerate</button>
+      <button onclick="handleEpisodeDelete('${episode.id}', ${podcastId})">Delete</button>
       <audio controls src="${episode.audio_file}"></audio>
     `;
     episodesList.appendChild(episodeItem);
@@ -88,24 +86,26 @@ function renderEpisodesPage(episodes) {
   // Include a form for creating new episodes
 }
 
-async function handlePodcastEdit(podcastId) {
-  // Fetch the podcast data and display a form for editing
-  // On form submit, send a PUT request to update the podcast
-}
-
 async function handlePodcastDelete(podcastId) {
   // Send a DELETE request to remove the podcast
   // Refresh the podcasts list
 }
 
-async function handleEpisodeEdit(episodeId) {
-  // Fetch the episode data and display a form for editing
-  // On form submit, send a PUT request to update the episode
-}
+async function handleEpisodeDelete(episodeId, podcastId) {
+  // show a confirmation dialog
+  const confirmed = confirm('Are you sure you want to delete this episode?');
+  if (!confirmed) {
+    return;
+  }
 
-async function handleEpisodeDelete(episodeId) {
-  // Send a DELETE request to remove the episode
-  // Refresh the episodes list
+  // Send a DELETE request to remove the episode:
+  await fetch(`/api/episodes/${episodeId}`, { method: 'DELETE' });
+  // Refresh the episodes list in the context of either the episodes page or the episodes in a podcast page:
+  if (podcastId) {
+    renderEpisodesForPodcast(await fetchEpisodes(podcastId), podcastId);
+  } else {
+    renderEpisodesPage(await fetchEpisodes());
+  }
 }
 
 podcastsLink.addEventListener('click', async (event) => {
@@ -120,11 +120,6 @@ episodesLink.addEventListener('click', async (event) => {
   const episodes = await fetchEpisodes(podcastId);
   renderEpisodesPage(episodes);
 });
-
-// Add event listeners for edit and delete buttons
-// ... (fetchPodcasts, fetchEpisodes, renderPodcastsPage, renderEpisodesPage, and other functions)
-
-// ... (other parts of your script.js code)
 
 async function createEpisode(podcastId, episodeData) {
     episodeData.podcast_id = podcastId;
@@ -146,25 +141,11 @@ async function createEpisode(podcastId, episodeData) {
         // Hide the loader
         contentDiv.innerHTML = ''; // Clear the loader
 
-        // Refresh the episodes list or display the newly created episode
-        // ... (your existing code)
-
     } catch (error) {
         // Handle errors and display an error message to the user
         console.error("Error creating episode:", error);
         contentDiv.innerHTML = "Error creating episode. Please try again.";
     }
-}
-
-// ... (rest of your script.js code)
-
-async function handleEpisodeRegenerate(episodeId) {
-  const response = await fetch(`/api/episodes/${episodeId}/regenerate`, {
-    method: 'POST',
-  });
-  const result = await response.json();
-  console.log(result.message);
-  // Refresh the episode data and display the updated content
 }
 
 function renderCreateEpisodePage(podcastId) {
@@ -195,6 +176,3 @@ function renderCreateEpisodePage(podcastId) {
     // Refresh the episodes list or display the newly created episode
   });
 }
-
-// Add a button or link to create a new episode
-// When clicked, call the renderCreateEpisodePage function with the selected podcast ID

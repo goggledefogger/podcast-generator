@@ -4,117 +4,89 @@ import logging
 from flask import Flask, request, jsonify, send_from_directory
 from script_generation import generate_script
 from audio_editing import convert_script_to_speech, stitch_audio_files
+import uuid
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='public', static_url_path='')
 PODCASTS_FILE = "podcasts.json"
 EPISODES_FILE = "episodes.json"
 AUDIO_OUTPUT_DIR = "audio_output"
 
-def load_data(file_name):
-    try:
-        with open(file_name, "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return []
+def load_data(file_path):
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as file:
+            json.dump([], file)  # Create an empty JSON array
+    with open(file_path, 'r') as file:
+        return json.load(file)
 
-def save_data(file_name, data):
-    with open(file_name, "w") as f:
-        json.dump(data, f, indent=2)
+def save_data(file_path, data):
+    try:
+        with open(file_path, 'w') as file:
+            json.dump(data, file, indent=4)
+        logging.info(f"Data saved to {file_path} successfully.")
+    except Exception as e:
+        logging.error(f"Failed to save data to {file_path}: {e}")
+
+@app.route("/api/episodes", methods=["POST"])
+def create_episode():
+    episode_data = request.get_json()
+    logger.info(f"Received episode data: {episode_data}")
+
+    # Assign a unique ID to the episode
+    episode_data["id"] = str(uuid.uuid4())
+
+    script = generate_script(episode_data["topic"], episode_data["num_speakers"], episode_data["duration"])
+    episode_data["script"] = script
+
+    logger.info("Converting script to speech...")
+    audio_files = convert_script_to_speech(script, AUDIO_OUTPUT_DIR)
+    episode_audio_path = f"{AUDIO_OUTPUT_DIR}/episode_{episode_data['id']}.mp3"
+    episode_audio = stitch_audio_files(audio_files, episode_audio_path)
+    episode_data["audio_file"] = episode_audio_path
+
+    episodes = load_data(EPISODES_FILE)
+    episodes.append(episode_data)
+    save_data(EPISODES_FILE, episodes)
+
+    logger.info(f"Episode created with audio file: {episode_audio_path}")
+    return jsonify(episode_data), 201
 
 @app.route("/api/podcasts", methods=["GET"])
 def get_podcasts():
     podcasts = load_data(PODCASTS_FILE)
     return jsonify(podcasts)
 
-@app.route("/api/podcasts", methods=["POST"])
-def create_podcast():
-    podcast = request.get_json()
-    podcasts = load_data(PODCASTS_FILE)
-    podcast["id"] = len(podcasts) + 1
-    podcasts.append(podcast)
-    save_data(PODCASTS_FILE, podcasts)
-    return jsonify(podcast), 201
-
-@app.route("/api/podcasts/<int:podcast_id>", methods=["PUT"])
-def update_podcast(podcast_id):
-    updated_podcast = request.get_json()
-    podcasts = load_data(PODCASTS_FILE)
-    for podcast in podcasts:
-        if podcast["id"] == podcast_id:
-            podcast.update(updated_podcast)
-            break
-    save_data(PODCASTS_FILE, podcasts)
-    return jsonify(updated_podcast)
-
-@app.route("/api/podcasts/<int:podcast_id>", methods=["DELETE"])
-def delete_podcast(podcast_id):
-    podcasts = load_data(PODCASTS_FILE)
-    podcasts = [podcast for podcast in podcasts if podcast["id"] != podcast_id]
-    save_data(PODCASTS_FILE, podcasts)
-    return "", 204
-
-@app.route("/api/podcasts/<int:podcast_id>/episodes", methods=["GET"])
+@app.route("/api/podcasts/<string:podcast_id>/episodes", methods=["GET"])
 def get_podcast_episodes(podcast_id):
     episodes = load_data(EPISODES_FILE)
+    logging.info(f"Retrieving episodes for podcast with ID: {podcast_id}")
+    logging.info(f"is the podcast ID a string or number: {type(podcast_id)}")
     podcast_episodes = [episode for episode in episodes if episode["podcast_id"] == podcast_id]
+    logging.info(f"Found {len(podcast_episodes)} episodes for podcast with ID: {podcast_id}")
     return jsonify(podcast_episodes)
 
-@app.route("/api/episodes", methods=["POST"])
-def create_episode():
-    episode_data = request.get_json()
-
-    logger.info("Generating script...")
-    chat_completion = generate_script(episode_data["topic"], episode_data["num_speakers"], episode_data["duration"])
-
-    logger.info("Saving episode data...")
+@app.route("/api/episodes/<string:episode_id>", methods=["DELETE"])
+def delete_episode(episode_id):
     episodes = load_data(EPISODES_FILE)
-    episode_data["id"] = len(episodes) + 1
+    episodes = [episode for episode in episodes if episode["id"] != episode_id]
 
-    # Extract the content (text) from the completion object but be ok if the value is None
-    episode_data["script"] = chat_completion.content
-
-    episodes.append(episode_data) # Add the episode data with the script to the episodes list
     save_data(EPISODES_FILE, episodes)
+    logger.info(f"Episode with ID {episode_id} deleted.")
+    return jsonify({"message": "Episode deleted"}), 200
 
-    logger.info("Generating audio...")
-    audio_files = convert_script_to_speech(episode_data["script"], AUDIO_OUTPUT_DIR)
+@app.route('/audio_output/<path:filename>')
+def serve_audio(filename):
+    return send_from_directory(AUDIO_OUTPUT_DIR, filename)
 
-    logger.info("Stitching audio files...")
-    episode_audio = stitch_audio_files(audio_files, f"{AUDIO_OUTPUT_DIR}/episode_{episode_data['id']}.mp3")
-    episode_data["audio_file"] = episode_audio
+@app.route('/')
+def serve_index():
+    return send_from_directory(app.static_folder, 'index.html')
 
-    logger.info("Episode generated successfully.")
-    return jsonify(episode_data), 201
-
-def generate_episode(episode_data):
-    script = generate_script(episode_data["topic"], episode_data["num_speakers"], episode_data["duration"])
-    episode_data["script"] = script
-
-    audio_files = convert_script_to_speech(script, AUDIO_OUTPUT_DIR)
-    episode_audio = stitch_audio_files(audio_files, f"{AUDIO_OUTPUT_DIR}/episode_{episode_data['id']}.mp3")
-    episode_data["audio_file"] = episode_audio
-
-    return episode_data
-
-@app.route("/api/episodes/<int:episode_id>/regenerate", methods=["POST"])
-def regenerate_episode(episode_id):
-    episodes = load_data(EPISODES_FILE)
-    episode = next((episode for episode in episodes if episode["id"] == episode_id), None)
-    if episode:
-        regenerated_episode = generate_episode(episode)
-        episode.update(regenerated_episode)
-        save_data(EPISODES_FILE, episodes)
-        return jsonify({"message": "Episode regenerated successfully"})
-    return jsonify({"message": "Episode not found"}), 404
-
-# Update the route for serving static files
-@app.route('/', defaults={'path': 'index.html'})
 @app.route('/<path:path>')
-def serve(path):
-    return send_from_directory('public', path) # Serve from 'public'
+def serve_file(path):
+    return send_from_directory(app.static_folder, path)
 
 if __name__ == "__main__":
     os.makedirs(AUDIO_OUTPUT_DIR, exist_ok=True)

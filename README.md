@@ -55,10 +55,6 @@ Copy code
 
 5. The generated episode will be saved in the `episodes.json` file, and the audio will be saved in the `audio_output` directory.
 
-6. To regenerate an existing episode:
-- Make a POST request to `/api/episodes/:episodeId/regenerate` with the appropriate episode ID.
-- The episode will be regenerated with new script and audio.
-
 ## Project Structure
 
 - `app.py`: Flask web server for serving static content and handling API requests.

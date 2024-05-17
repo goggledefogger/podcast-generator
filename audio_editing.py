@@ -13,9 +13,9 @@ def convert_script_to_speech(script, output_dir):
         try:
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
-                logger.error(f"Error running 'say' command: {result.stderr}")
+                logging.error(f"Error running 'say' command: {result.stderr}")
         except Exception as e:
-            logger.error(f"Error during speech synthesis: {e}")
+            logging.error(f"Error during speech synthesis: {e}")
 
         audio_files.append(output_file)
 

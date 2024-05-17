@@ -124,18 +124,39 @@ episodesLink.addEventListener('click', async (event) => {
 // Add event listeners for edit and delete buttons
 // ... (fetchPodcasts, fetchEpisodes, renderPodcastsPage, renderEpisodesPage, and other functions)
 
+// ... (other parts of your script.js code)
+
 async function createEpisode(podcastId, episodeData) {
-  episodeData.podcast_id = podcastId;
-  const response = await fetch('/api/episodes', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(episodeData),
-  });
-  const episode = await response.json();
-  return episode;
+    episodeData.podcast_id = podcastId;
+
+    // Show the loader
+    contentDiv.innerHTML = `<div class="loader"></div> Generating Episode...`;
+
+    try {
+        const response = await fetch("/api/episodes", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(episodeData)
+        });
+        const episode = await response.json();
+        console.log("Episode created:", episode);
+
+        // Hide the loader
+        contentDiv.innerHTML = ''; // Clear the loader
+
+        // Refresh the episodes list or display the newly created episode
+        // ... (your existing code)
+
+    } catch (error) {
+        // Handle errors and display an error message to the user
+        console.error("Error creating episode:", error);
+        contentDiv.innerHTML = "Error creating episode. Please try again.";
+    }
 }
+
+// ... (rest of your script.js code)
 
 async function handleEpisodeRegenerate(episodeId) {
   const response = await fetch(`/api/episodes/${episodeId}/regenerate`, {

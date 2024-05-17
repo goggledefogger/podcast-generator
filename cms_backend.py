@@ -1,8 +1,12 @@
 import json
 import os
+import logging
 from flask import Flask, request, jsonify, send_from_directory
 from script_generation import generate_script
 from audio_editing import convert_script_to_speech, stitch_audio_files
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 PODCASTS_FILE = "podcasts.json"
@@ -61,12 +65,29 @@ def get_podcast_episodes(podcast_id):
 @app.route("/api/episodes", methods=["POST"])
 def create_episode():
     episode_data = request.get_json()
-    episode = generate_episode(episode_data)
+
+    logger.info("Generating script...")
+    chat_completion = generate_script(episode_data["topic"], episode_data["num_speakers"], episode_data["duration"])
+
+    logger.info("Saving episode data...")
     episodes = load_data(EPISODES_FILE)
-    episode["id"] = len(episodes) + 1
-    episodes.append(episode)
+    episode_data["id"] = len(episodes) + 1
+
+    # Extract the content (text) from the completion object but be ok if the value is None
+    episode_data["script"] = chat_completion.content
+
+    episodes.append(episode_data) # Add the episode data with the script to the episodes list
     save_data(EPISODES_FILE, episodes)
-    return jsonify(episode), 201
+
+    logger.info("Generating audio...")
+    audio_files = convert_script_to_speech(episode_data["script"], AUDIO_OUTPUT_DIR)
+
+    logger.info("Stitching audio files...")
+    episode_audio = stitch_audio_files(audio_files, f"{AUDIO_OUTPUT_DIR}/episode_{episode_data['id']}.mp3")
+    episode_data["audio_file"] = episode_audio
+
+    logger.info("Episode generated successfully.")
+    return jsonify(episode_data), 201
 
 def generate_episode(episode_data):
     script = generate_script(episode_data["topic"], episode_data["num_speakers"], episode_data["duration"])

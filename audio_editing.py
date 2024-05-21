@@ -5,7 +5,7 @@ import logging
 from typing import List
 
 # Define a list of available voices on macOS
-AVAILABLE_VOICES = ["Fred", "Samantha"]
+AVAILABLE_VOICES = ["Alex", "Ava", "Samantha"]
 
 pattern = re.compile(r"^\s*(\w+):(.*)")
 

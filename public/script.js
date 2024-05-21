@@ -64,7 +64,7 @@ function renderEpisodesForPodcast(episodes, podcastId) {
     const episodeItem = document.createElement('li');
     episodeItem.innerHTML = `
       ${episode.topic}
-      <button onclick="handleEpisodeDelete('${episode.id}', ${podcastId})">Delete</button>
+      <button onclick="handleEpisodeDelete('${episode.id}', '${podcastId}')">Delete</button>
       <audio controls src="${episode.audio_file}"></audio>
     `;
     episodesList.appendChild(episodeItem);
@@ -92,21 +92,54 @@ async function handlePodcastDelete(podcastId) {
 }
 
 async function handleEpisodeDelete(episodeId, podcastId) {
-  // show a confirmation dialog
-  const confirmed = confirm('Are you sure you want to delete this episode?');
-  if (!confirmed) {
-    return;
-  }
+  try {
+    const response = await fetch(`/api/episodes/${episodeId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    const data = await response.json();
 
-  // Send a DELETE request to remove the episode:
-  await fetch(`/api/episodes/${episodeId}`, { method: 'DELETE' });
-  // Refresh the episodes list in the context of either the episodes page or the episodes in a podcast page:
-  if (podcastId) {
-    renderEpisodesForPodcast(await fetchEpisodes(podcastId), podcastId);
-  } else {
-    renderEpisodesPage(await fetchEpisodes());
+    if (data.message === 'Episode deleted') {
+      alert('Episode deleted successfully');
+      // Optionally, refresh the episodes list or update the UI
+      await loadPodcastEpisodes(podcastId);
+    } else {
+      alert('Failed to delete episode');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred while deleting the episode.');
   }
 }
+
+async function loadPodcastEpisodes(podcastId) {
+  try {
+    const response = await fetch(`/api/podcasts/${podcastId}/episodes`);
+    const episodes = await response.json();
+    // Update the UI with the new list of episodes
+    displayEpisodes(episodes);
+  } catch (error) {
+    console.error('Error loading episodes:', error);
+  }
+}
+
+function displayEpisodes(episodes) {
+  // Your code to update the UI with the list of episodes
+  const episodesList = document.getElementById('episodes-list');
+  episodesList.innerHTML = '';
+
+  episodes.forEach((episode) => {
+    const episodeElement = document.createElement('div');
+    episodeElement.innerHTML = `
+            <p>${episode.title}</p>
+            <button onclick="handleEpisodeDelete('${episode.id}', '${episode.podcastId}')">Delete</button>
+        `;
+    episodesList.appendChild(episodeElement);
+  });
+}
+
 
 podcastsLink.addEventListener('click', async (event) => {
   event.preventDefault();

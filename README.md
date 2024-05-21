@@ -63,9 +63,8 @@ Copy code
 - `public/`: Directory for storing static content (HTML, CSS, JavaScript).
 - `index.html`: Frontend HTML file for the CMS.
 - `script.js`: Frontend JavaScript file for interacting with the backend API.
-- `data/`: Directory for storing podcast and episode data.
-- `podcasts.json`: JSON file for storing podcast data.
-- `episodes.json`: JSON file for storing episode data.
+- `db/podcasts.json`: JSON file for storing podcast data.
+- `db/episodes.json`: JSON file for storing episode data.
 - `audio_output/`: Directory for storing generated audio files.
 
 ## Contributing

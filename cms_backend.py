@@ -10,8 +10,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_folder='public', static_url_path='')
-PODCASTS_FILE = "podcasts.json"
-EPISODES_FILE = "episodes.json"
+PODCASTS_FILE = "db/podcasts.json"
+EPISODES_FILE = "db/episodes.json"
 AUDIO_OUTPUT_DIR = "audio_output"
 
 def load_data(file_path):

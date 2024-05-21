@@ -78,8 +78,9 @@ def create_podcast():
 def get_podcast_episodes(podcast_id):
     episodes = load_data(EPISODES_FILE)
     logging.info(f"Retrieving episodes for podcast with ID: {podcast_id}")
-    logging.info(f"is the podcast ID a string or number: {type(podcast_id)}")
-    podcast_episodes = [episode for episode in episodes if episode["podcast_id"] == podcast_id]
+
+    # Convert podcast_id to a string for consistency in comparison
+    podcast_episodes = [episode for episode in episodes if episode["podcast_id"] == str(podcast_id)]
     logging.info(f"Found {len(podcast_episodes)} episodes for podcast with ID: {podcast_id}")
     return jsonify(podcast_episodes)
 

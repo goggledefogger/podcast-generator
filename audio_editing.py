@@ -7,7 +7,7 @@ from typing import List
 # Define a list of available voices on macOS
 AVAILABLE_VOICES = ["Alex", "Ava", "Samantha"]
 
-# Updated pattern to capture more accurately
+# Updated pattern to capture any alphanumeric or whitespace name before the colon
 pattern = re.compile(r"^([\w\s]+):(.*)")
 
 def convert_script_to_speech(script: str, output_dir: str) -> List[str]:
@@ -41,6 +41,9 @@ def convert_script_to_speech(script: str, output_dir: str) -> List[str]:
             # If the line doesn't match the pattern, skip it (no voice assignment)
             logging.info(f"Line didn't match pattern, skipping: '{line}'")
             continue
+
+        # Escape double quotes in text for shell command
+        text = text.replace('"', '\\"')
 
         # Generate the audio file using the `say` command without the speaker name
         aiff_file_path = os.path.join(output_dir, f"line_{i}.aiff")

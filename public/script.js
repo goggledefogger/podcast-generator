@@ -187,7 +187,7 @@ function renderCreateEpisodePage(podcastId) {
         <form id="create-episode-form">
             <input type="text" id="topic" placeholder="Topic" required>
             <input type="number" id="num_speakers" placeholder="Number of Speakers" required>
-            <input type="number" id="duration" placeholder="Duration (minutes)" required>
+            <input type="number" id="duration" placeholder="Duration (seconds)" required>
             <button type="submit">Create Episode</button>
         </form>
     `;

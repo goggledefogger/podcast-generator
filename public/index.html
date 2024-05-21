@@ -3,20 +3,50 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Podcast CMS</title>
+  <title>Podcasts</title>
+  <script>
+    async function loadPodcasts() {
+      try {
+        const response = await fetch('/api/podcasts');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const podcasts = await response.json();
+        const podcastList = document.getElementById('podcastList');
+        podcastList.innerHTML = '';
+
+        podcasts.forEach(podcast => {
+          const listItem = document.createElement('li');
+          listItem.innerHTML = `
+                        ${podcast.name || 'No name available'}
+                        <button onclick="editPodcast('${podcast.id}')">Edit</button>
+                        <button onclick="viewEpisodes('${podcast.id}')">View Episodes</button>
+                    `;
+          podcastList.appendChild(listItem);
+        });
+      } catch (error) {
+        console.error('Failed to load podcasts:', error);
+        const podcastList = document.getElementById('podcastList');
+        podcastList.innerHTML = '<li>Error loading podcasts</li>';
+      }
+    }
+
+    function editPodcast(podcastId) {
+      window.location.href = `edit_podcast.html?id=${podcastId}`;
+    }
+
+    function viewEpisodes(podcastId) {
+      window.location.href = `episodes.html?podcastId=${podcastId}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPodcasts);
+  </script>
 </head>
 
 <body>
-  <h1>Podcast CMS</h1>
-  <nav>
-    <ul>
-      <li><a href="#" id="podcasts-link">Podcasts</a></li>
-      <li><a href="#" id="episodes-link">Episodes</a></li>
-    </ul>
-  </nav>
-  <div id="content"></div>
-  <script src="script.js"></script>
+  <h1>Podcasts</h1>
+  <button onclick="window.location.href='edit_podcast.html'">Create New Podcast</button>
+  <ul id="podcastList"></ul>
 </body>
 
 </html>

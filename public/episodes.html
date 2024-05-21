@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Episodes</title>
+  <script>
+    async function loadEpisodes() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const podcastId = urlParams.get('podcastId');
+      const response = await fetch(`/api/podcasts/${podcastId}/episodes`);
+      const episodes = await response.json();
+      const episodeList = document.getElementById('episodeList');
+      episodeList.innerHTML = '';
+
+      episodes.forEach(episode => {
+        const listItem = document.createElement('li');
+        listItem.innerHTML = `
+                    ${episode.topic || 'No topic available'}
+                    <button onclick="editEpisode('${episode.id}')">Edit</button>
+                `;
+        episodeList.appendChild(listItem);
+      });
+    }
+
+    function editEpisode(episodeId) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const podcastId = urlParams.get('podcastId');
+      window.location.href = `edit_episode.html?id=${episodeId}&podcastId=${podcastId}`;
+    }
+
+    function createEpisode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const podcastId = urlParams.get('podcastId');
+      window.location.href = `edit_episode.html?podcastId=${podcastId}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', loadEpisodes);
+  </script>
+</head>
+
+<body>
+  <h1>Episodes</h1>
+  <button onclick="createEpisode()">Create New Episode</button>
+  <ul id="episodeList"></ul>
+  <button onclick="window.location.href='index.html'">Back to Podcasts</button>
+</body>
+
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Podcast</title>
+  <script>
+    async function generateField(fieldName) {
+      const response = await fetch(`/api/generate/${fieldName}`, { method: 'POST' });
+      const data = await response.json();
+      document.getElementById(fieldName).value = data.content;
+    }
+
+    async function savePodcast() {
+      const podcastId = document.getElementById('podcastId').value;
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const author_bio = document.getElementById('author_bio').value;
+      const keywords = document.getElementById('keywords').value;
+      const genre = document.getElementById('genre').value;
+
+      const response = await fetch(`/api/podcasts/${podcastId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, author_bio, keywords, genre })
+      });
+
+      if (response.ok) {
+        alert('Podcast saved successfully');
+        window.location.href = 'index.html';
+      } else {
+        alert('Error saving podcast');
+      }
+    }
+
+    async function loadPodcast(podcastId) {
+      const response = await fetch(`/api/podcasts`);
+      const podcasts = await response.json();
+      const podcast = podcasts.find(p => p.id === podcastId);
+      if (podcast) {
+        document.getElementById('title').value = podcast.title;
+        document.getElementById('description').value = podcast.description;
+        document.getElementById('author_bio').value = podcast.author_bio;
+        document.getElementById('keywords').value = podcast.keywords;
+        document.getElementById('genre').value = podcast.genre;
+        document.getElementById('podcastId').value = podcastId;
+      } else {
+        alert('Podcast not found');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const podcastId = urlParams.get('id');
+      if (podcastId) {
+        loadPodcast(podcastId);
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <h1>Edit Podcast</h1>
+  <form>
+    <input type="hidden" id="podcastId" value="">
+
+    <label for="title">Title:</label>
+    <input type="text" id="title">
+    <button type="button" onclick="generateField('podcast.title')">Generate Title</button>
+    <br><br>
+
+    <label for="description">Description:</label>
+    <textarea id="description"></textarea>
+    <button type="button" onclick="generateField('podcast.description')">Generate Description</button>
+    <br><br>
+
+    <label for="author_bio">Author Bio:</label>
+    <textarea id="author_bio"></textarea>
+    <button type="button" onclick="generateField('podcast.author_bio')">Generate Author Bio</button>
+    <br><br>
+
+    <label for="keywords">Keywords:</label>
+    <input type="text" id="keywords">
+    <button type="button" onclick="generateField('podcast.keywords')">Generate Keywords</button>
+    <br><br>
+
+    <label for="genre">Genre:</label>
+    <input type="text" id="genre">
+    <button type="button" onclick="generateField('podcast.genre')">Generate Genre</button>
+    <br><br>
+
+    <button type="button" onclick="savePodcast()">Save</button>
+    <button type="button" onclick="window.location.href='index.html'">Back to Podcasts</button>
+  </form>
+</body>
+
+</html>

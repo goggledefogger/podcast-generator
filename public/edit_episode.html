@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Episode</title>
+  <script>
+    async function generateField(fieldName) {
+      const response = await fetch(`/api/generate/${fieldName}`, { method: 'POST' });
+      const data = await response.json();
+      document.getElementById(fieldName).value = data.content;
+    }
+
+    async function saveEpisode() {
+      const episodeId = document.getElementById('episodeId').value;
+      const podcastId = document.getElementById('podcastId').value;
+      const title = document.getElementById('title').value;
+      const description = document.getElementById('description').value;
+      const show_notes = document.getElementById('show_notes').value;
+      const guest_intro = document.getElementById('guest_intro').value;
+      const key_takeaways = document.getElementById('key_takeaways').value;
+
+      const response = await fetch(`/api/episodes/${episodeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          podcast_id: podcastId,
+          title: title,
+          description: description,
+          show_notes: show_notes,
+          guest_intro: guest_intro,
+          key_takeaways: key_takeaways
+        })
+      });
+
+      if (response.ok) {
+        alert('Episode saved successfully');
+        window.location.href = `episodes.html?podcastId=${podcastId}`;
+      } else {
+        alert('Error saving episode');
+      }
+    }
+
+    async function loadEpisode(episodeId) {
+      try {
+        const response = await fetch(`/api/episodes/${episodeId}`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const episode = await response.json();
+        if (episode) {
+          document.getElementById('title').value = episode.topic || 'No title available';
+          document.getElementById('description').value = episode.description || '';
+          document.getElementById('show_notes').value = episode.show_notes || '';
+          document.getElementById('guest_intro').value = episode.guest_intro || '';
+          document.getElementById('key_takeaways').value = episode.key_takeaways || '';
+          document.getElementById('episodeId').value = episodeId;
+          document.getElementById('podcastId').value = episode.podcast_id;
+        } else {
+          alert('Episode not found');
+        }
+      } catch (error) {
+        console.error('Failed to load episode:', error);
+        alert('Error loading episode');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const episodeId = urlParams.get('id');
+      const podcastId = urlParams.get('podcastId');
+      if (episodeId) {
+        loadEpisode(episodeId);
+      } else if (podcastId) {
+        document.getElementById('podcastId').value = podcastId;
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <h1>Edit Episode</h1>
+  <form>
+    <input type="hidden" id="episodeId" value="">
+    <input type="hidden" id="podcastId" value="">
+
+    <label for="title">Title:</label>
+    <input type="text" id="title">
+    <button type="button" onclick="generateField('episode.title')">Generate Title</button>
+    <br><br>
+
+    <label for="description">Description:</label>
+    <textarea id="description"></textarea>
+    <button type="button" onclick="generateField('episode.description')">Generate Description</button>
+    <br><br>
+
+    <label for="show_notes">Show Notes:</label>
+    <textarea id="show_notes"></textarea>
+    <button type="button" onclick="generateField('episode.show_notes')">Generate Show Notes</button>
+    <br><br>
+
+    <label for="guest_intro">Guest Introduction:</label>
+    <textarea id="guest_intro"></textarea>
+    <button type="button" onclick="generateField('episode.guest_intro')">Generate Guest Introduction</button>
+    <br><br>
+
+    <label for="key_takeaways">Key Takeaways:</label>
+    <textarea id="key_takeaways"></textarea>
+    <button type="button" onclick="generateField('episode.key_takeaways')">Generate Key Takeaways</button>
+    <br><br>
+
+    <button type="button" onclick="saveEpisode()">Save</button>
+    <button type="button" onclick="window.location.href='episodes.html'">Back to Episodes</button>
+  </form>
+</body>
+
+</html>

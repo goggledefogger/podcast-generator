@@ -5,6 +5,7 @@ import uuid
 from flask import Flask, request, jsonify, send_from_directory, Response
 from script_generation import generate_script
 from audio_editing import convert_script_to_speech, stitch_audio_files
+from llm_utils import call_llm, get_prompt, SYSTEM_PROMPT
 from feedgen.feed import FeedGenerator
 
 logging.basicConfig(level=logging.INFO)
@@ -135,6 +136,39 @@ def update_episode(episode_id):
             return jsonify({"message": "Episode updated"}), 200
 
     return jsonify({"error": "Episode not found"}), 404
+
+@app.route("/api/generate/<field>", methods=["POST"])
+def generate_field(field):
+    generated_content = generate_field_content(field)
+    return jsonify({"content": generated_content})
+
+def generate_field_content(field_name):
+    # Define context based on field name
+    context = {}
+    if 'episode' in field_name:
+        context = {
+            "topic": "example topic",
+            "duration": 10,
+            "num_speakers": 2,
+            "plural": "s",
+            "speakers": "Speaker 1 and Speaker 2",
+            "guest_name": "Guest"
+        }
+    elif 'podcast' in field_name:
+        context = {
+            "topic": "example topic",
+            "author_name": "Author"
+        }
+
+    prompt = get_prompt(field_name, context)
+    if prompt is None:
+        return "Prompt not found for the specified field."
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": prompt}
+    ]
+    return call_llm(messages)
+
 
 def generate_rss_feed(podcast_id):
     episodes = load_data(EPISODES_FILE)

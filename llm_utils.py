@@ -14,8 +14,9 @@ client = OpenAI(base_url=LLM_BASE_URL, api_key=OPENAI_API_KEY)
 with open('llm_config.json', 'r') as config_file:
     llm_config = json.load(config_file)
 
-SYSTEM_PROMPT = llm_config.get("system_prompt", "You are a helpful assistant that generates podcast scripts. When responding, return only the script content without any introductions, explanations, timestamps, or additional formatting. The number of speakers provided should be exactly the number of people in the podcast, including hosts and guests. Ensure that each speaker's name is used consistently throughout the script.")
-USER_PROMPT_TEMPLATE = llm_config.get("user_prompt_template", "Generate a {duration} minute podcast script with {num_speakers} speaker{plural} discussing the topic: {topic}. Ensure there are exactly {num_speakers} speaker{plural}, and use the names {speakers} consistently throughout the script. Do not include any timestamps or additional formatting.")
+SYSTEM_PROMPT = llm_config.get("system_prompt")
+USER_PROMPT_TEMPLATE = llm_config.get("user_prompt_template")
+FIELD_PROMPTS = llm_config.get("field_prompts")
 
 def call_llm(messages):
     if LLM_BASE_URL == "https://api.openai.com/v1":
@@ -39,3 +40,21 @@ def call_llm(messages):
         response_content = completion.choices[0].message.content.strip()
 
     return response_content
+
+def get_prompt(field, context):
+    logging.info(f"Fetching prompt for field: {field}")
+    categories = field.split('.')
+    prompt = FIELD_PROMPTS
+    for category in categories:
+        logging.info(f"Accessing category: {category}")
+        prompt = prompt.get(category, None)
+        if prompt is None:
+            logging.error(f"Prompt for category '{category}' not found.")
+            return None
+    if isinstance(prompt, str):
+        logging.info(f"Prompt found: {prompt}")
+        return prompt.format(**context)
+    else:
+        logging.error(f"Invalid prompt structure for field '{field}'.")
+        return None
+

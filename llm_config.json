@@ -1,4 +1,20 @@
 {
-  "system_prompt": "You are a helpful assistant that generates podcast scripts. When responding, return only the script content without any introductions, explanations, timestamps, or additional formatting. The number of speakers provided should be exactly the number of people in the podcast, including hosts and guests. Ensure that each speaker's name is used consistently throughout the script.",
-  "user_prompt_template": "Generate a {duration} second podcast script with {num_speakers} speaker{plural} discussing the topic: {topic}. Ensure there are exactly {num_speakers} speaker{plural}, and use the names {speakers} consistently throughout the script. Do not include any timestamps or additional formatting."
+  "system_prompt": "You are a helpful assistant that generates podcast scripts and metadata. When responding, return only the requested content without any introductions, explanations, timestamps, or additional formatting.",
+  "user_prompt_template": "Generate a {duration} minute podcast script with {num_speakers} speaker{plural} discussing the topic: {topic}. Ensure there are exactly {num_speakers} speaker{plural}, and use the names {speakers} consistently throughout the script. Do not include any timestamps or additional formatting.",
+  "field_prompts": {
+    "episode": {
+      "title": "Generate a creative and catchy title for a podcast episode about {topic}.",
+      "description": "Generate a detailed description for a podcast episode covering {topic}.",
+      "show_notes": "Generate show notes for a podcast episode about {topic}.",
+      "guest_intro": "Write an introduction for a guest named {guest_name} appearing on a podcast episode about {topic}.",
+      "key_takeaways": "List key takeaways from a podcast episode about {topic}."
+    },
+    "podcast": {
+      "title": "Generate a creative and catchy title for a podcast about {topic}.",
+      "description": "Generate a detailed description for a podcast that covers {topic}.",
+      "author_bio": "Generate a professional bio for a podcast author named {author_name}.",
+      "keywords": "Generate a list of keywords for a podcast about {topic}.",
+      "genre": "Suggest a genre for a podcast about {topic}."
+    }
+  }
 }

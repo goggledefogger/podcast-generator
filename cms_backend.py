@@ -15,6 +15,7 @@ EPISODES_FILE = "db/episodes.json"
 AUDIO_OUTPUT_DIR = "audio_output"
 
 def load_data(file_path):
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)  # Ensure directory exists
     if not os.path.exists(file_path):
         with open(file_path, 'w') as file:
             json.dump([], file)  # Create an empty JSON array
@@ -57,6 +58,21 @@ def create_episode():
 def get_podcasts():
     podcasts = load_data(PODCASTS_FILE)
     return jsonify(podcasts)
+
+@app.route("/api/podcasts", methods=["POST"])
+def create_podcast():
+    podcast_data = request.get_json()
+    logger.info(f"Received podcast data: {podcast_data}")
+
+    # Assign a unique ID to the podcast
+    podcast_data["id"] = str(uuid.uuid4())
+
+    podcasts = load_data(PODCASTS_FILE)
+    podcasts.append(podcast_data)
+    save_data(PODCASTS_FILE, podcasts)
+
+    logger.info(f"Podcast created with ID: {podcast_data['id']}")
+    return jsonify(podcast_data), 201
 
 @app.route("/api/podcasts/<string:podcast_id>/episodes", methods=["GET"])
 def get_podcast_episodes(podcast_id):
